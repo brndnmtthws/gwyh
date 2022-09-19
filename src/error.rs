@@ -1,9 +1,24 @@
-use tokio::runtime::Runtime;
+use std::fmt::Debug;
 
-pub struct Error;
+use tracing::error;
 
-impl From<std::io::Error> for Error {
-    fn from(err: std::io::Error) -> Self {
-        Error {}
+#[derive(Debug)]
+pub enum Error {
+    GenServerErr,
+    NoRegistry(Vec<u8>, String),
+    BroadcastFailed,
+    BroadcastSend(Vec<u8>),
+    UnexpectedResponse,
+    Timeout,
+}
+
+impl<M, R> From<genserver::Error<M, R>> for Error
+where
+    M: Debug,
+    R: Debug,
+{
+    fn from(err: genserver::Error<M, R>) -> Self {
+        error!("Error from genserver: {err:?}");
+        Self::GenServerErr
     }
 }

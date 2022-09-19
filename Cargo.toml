@@ -4,4 +4,24 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-tokio = { version = "1", features = ["full"] }
+rmp-serde = "1.1"
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1.21", features = ["full", "tracing"] }
+dryoc = { version = "0.3", features = ["nightly", "serde", "simd_backend"] }
+uuid = { version = "1.1", features = ["v4", "fast-rng", "serde"] }
+rand = "0.8"
+rand_chacha = { version = "0.3", features = ["simd"] }
+lru = "0.7"
+tracing = "0.1"
+genserver = "0.1"
+chrono = { version = "0.4", default-features = false, features = [
+    "clock",
+    "serde",
+] }
+futures = "0.3"
+lazy_static = "1.4.0"
+
+[dev-dependencies]
+test-log = { version = "0.2", features = ["log", "trace"] }
+env_logger = "0.9"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
