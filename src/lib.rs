@@ -12,7 +12,7 @@ mod packet_handler;
 mod peer;
 mod peer_manager;
 mod registry;
-pub mod sequence;
+mod sequence;
 mod server;
 
 use std::future::Future;

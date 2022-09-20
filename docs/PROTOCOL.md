@@ -41,10 +41,10 @@ Gwyh uses an
 [AIMD](https://en.wikipedia.org/wiki/Additive_increase/multiplicative_decrease)-based
 congestion control algorithm, based on the one described by the [UDT
 protocol](https://en.wikipedia.org/wiki/UDP-based_Data_Transfer_Protocol). As
-gwyh's protocol is ack-less, we instead use naks exclusively to measure
-deliverability and estimate transmission rates. Under normal circumstances, the
-sending delay between packets will trend toward zero provided the network is
-congestion-free.
+gwyh's protocol is ack-less, we instead use naks (dropped packets are detected
+using sequence numbers) exclusively to measure deliverability and estimate
+transmission rates. Under normal circumstances, the sending delay between
+packets will trend toward zero provided the network is congestion-free.
 
 ## Initial handshake
 
@@ -68,7 +68,16 @@ The handshake consists of 4 steps:
 * **OkBoss**: Alice responds with response to challenge
 * **GoTeam**: Bob responds with an OK, we are now authenticated and can enjoy our lives
 
-![diagram](./PROTOCOL-1.svg)
+```mermaid
+sequenceDiagram
+    title Handshake between 2 homies
+    participant A as Homie Alice
+    participant B as Homie Bob
+    A-->>B: Hello { public key, HMAC, timestamp }
+    B-->>A: Ohai { public key, HMAC, timestamp, challenge }
+    A-->>B: OkBoss { response }
+    B-->>A: GoTeam
+```
 
 The time-locked HMAC is based on Blake2b, which includes a timestamp of the
 current time the HMAC was generated. HMACs are valid for +/- 60 seconds from the
@@ -91,7 +100,14 @@ will fail the OkBoss without the pre-shared key.
 After a successful handshake, a new homie will request the list of peers from any
 of the bootstrap peers.
 
-![diagram](./PROTOCOL-2.svg)
+```mermaid
+sequenceDiagram
+    title Peer listing
+    participant A as Homie Alice
+    participant B as Homie Bob
+    A-->>B: PeerList (homies wya??)
+    B-->>A: Peers(Vec<Peer>)
+```
 
 ## Selecting peers for broadcasting updates
 
@@ -133,7 +149,23 @@ to it. Once a subscription is established, a heartbeat is sent every 5 seconds
 to make sure the peer is happy, alive, and well. If a heartbeat is missed 3
 times, that peer is marked as down and removed from the peer list.
 
-![diagram](./PROTOCOL-3.svg)
+```mermaid
+sequenceDiagram
+    title Subscription lifecycle
+    participant A as Homie Alice
+    participant B as Homie Bob
+    A-->>B: StartSubscription(this_node)
+    par
+      loop For each broadcast
+          B-->>A: Message
+      end
+    and
+      loop Every 5 seconds
+          B-->>A: Heartbeat
+      end
+    end
+    A-->>B: EndSubscription(this_node)
+```
 
 Broadcasts are forwarded to all of a homie's subscribed peers immediately, but
 only for messages that haven't been seen recently. An LRU cache is used to keep
@@ -141,4 +173,24 @@ track of distinct message identifiers. If a homie receives a message with an ID
 that has already been seen, the message is simply ignored rather than forwarded
 along.
 
-![diagram](./PROTOCOL-4.svg)
+```mermaid
+sequenceDiagram
+    title Propagating messages
+    participant A as Homie Alice
+    participant B as Homie Bob
+    participant C as Homie Charlie
+    participant D as Homie Diana
+    participant E as Homie Edward
+    participant F as Homie Francis
+  par
+    A->>B: Broadcast
+    A->>C: Broadcast
+  end
+  par
+    B->>D: Broadcast
+    B->>E: Broadcast
+  end
+  par
+    D->>F: Broadcast
+  end
+```
