@@ -2,6 +2,25 @@
 name = "gwyh"
 version = "0.1.0"
 edition = "2021"
+authors = ["Brenden Matthews <brenden@brndn.io>"]
+categories = ["asynchronous", "concurrency", "network-programming"]
+description = "gwyh is a sweet gossip library"
+documentation = "https://docs.rs/dryoc"
+keywords = [
+    "async",
+    "asynchronous",
+    "eventually-consistent",
+    "gossip",
+    "network",
+    "networking",
+    "protocol",
+]
+license = "LGPL-3.0-only"
+readme = "README.md"
+repository = "https://github.com/brndnmtthws/gwyh"
+
+# requires 1.65 for GATs
+rust = "1.65"
 
 [dependencies]
 rmp-serde = "1.1"
