@@ -18,7 +18,6 @@ mod server;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
-use std::time::Duration;
 
 use error::Error;
 use nodeinfo::NodeInfo;
@@ -162,7 +161,6 @@ pub struct GwyhBuilder {
     broadcast_handler: Option<Arc<dyn GwyhHandler + Send + Sync>>,
     zone: Option<String>,
     distribution_strategy: DistributionStrategy,
-    ack_timeout: Duration,
 }
 
 impl GwyhBuilder {
@@ -175,7 +173,6 @@ impl GwyhBuilder {
             broadcast_handler: None,
             zone: None,
             distribution_strategy: DistributionStrategy::Uniform,
-            ack_timeout: Duration::from_secs(60),
         }
     }
 
@@ -218,13 +215,6 @@ impl GwyhBuilder {
         }
     }
 
-    pub fn with_ack_timeout(self, ack_timeout: Duration) -> Self {
-        Self {
-            ack_timeout,
-            ..self
-        }
-    }
-
     pub fn build(self) -> std::io::Result<Gwyh> {
         let Self {
             bind_addr,
@@ -234,7 +224,6 @@ impl GwyhBuilder {
             broadcast_handler,
             zone,
             distribution_strategy,
-            ack_timeout,
         } = self;
 
         let g = Gwyh {
