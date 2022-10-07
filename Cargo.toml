@@ -20,7 +20,7 @@ readme = "README.md"
 repository = "https://github.com/brndnmtthws/gwyh"
 
 # requires 1.65 for GATs
-rust = "1.65"
+rust-version = "1.65"
 
 [dependencies]
 rmp-serde = "1.1"
