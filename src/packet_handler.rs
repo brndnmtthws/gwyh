@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::future::Future;
 use std::net::SocketAddr;
+use std::num::NonZeroUsize;
 use std::ops::RangeInclusive;
 use std::sync::Arc;
 
@@ -135,7 +136,7 @@ impl GenServer for PacketHandler {
             rc_sequences: HashMap::new(),
             keys: HashMap::new(),
             subscribers: vec![],
-            seen: LruCache::new(10_000),
+            seen: LruCache::new(NonZeroUsize::new(10_000).expect("bad usize")),
             broadcast_handler_async: None,
             broadcast_handler: None,
             rng: SeedableRng::from_entropy(),
