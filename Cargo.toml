@@ -12,8 +12,6 @@ keywords = [
     "eventually-consistent",
     "gossip",
     "network",
-    "networking",
-    "protocol",
 ]
 license = "LGPL-3.0-only"
 readme = "README.md"
