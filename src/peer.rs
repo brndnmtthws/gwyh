@@ -90,7 +90,7 @@ mod tests {
         let their_keypair = KeyPair::gen();
 
         let peer = Peer::new(
-            Some(their_keypair.public_key),
+            Some(their_keypair.public_key.clone()),
             sockaddr,
             Uuid::new_v4(),
             Some(Utc::now()),

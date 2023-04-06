@@ -369,7 +369,7 @@ impl Handshaker {
                     self.send_ohai(
                         handshake.id,
                         sockaddr,
-                        handshake.peer.our_keypair().unwrap().public_key,
+                        handshake.peer.our_keypair().unwrap().public_key.clone(),
                         handshake.challenge.as_ref().unwrap().clone(),
                         &handshake.timestamp,
                         self.inflight.contains(&sockaddr),
@@ -444,7 +444,7 @@ impl Handshaker {
         let payload = Payload::H(Handshake {
             id: handshake.id,
             step: HandshakeStep::Hello {
-                pk: handshake.peer.our_keypair().unwrap().public_key,
+                pk: handshake.peer.our_keypair().unwrap().public_key.clone(),
                 zone: self.registry.nodeinfo().zone().clone(),
                 hmacs: self.compute_hmacs(&handshake.timestamp),
                 timestamp: handshake.timestamp,
