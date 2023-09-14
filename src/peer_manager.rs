@@ -353,7 +353,7 @@ impl PeerManager {
                     .collect();
 
                 local_peers.append(&mut remote_peers);
-                HashSet::from_iter(local_peers.into_iter())
+                HashSet::from_iter(local_peers)
             }
             DistributionStrategy::PreferLocal => peers
                 .collect::<Vec<&Peer>>()

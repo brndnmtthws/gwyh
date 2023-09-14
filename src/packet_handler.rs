@@ -312,10 +312,7 @@ impl PacketHandler {
     #[tracing::instrument(skip(self))]
     pub async fn send(&mut self, payload: Payload, to_sockaddr: SocketAddr) {
         if let Some(socket) = self.socket.clone() {
-            let seq = self
-                .tx_sequences
-                .entry(to_sockaddr)
-                .or_insert_with(Seq32::new);
+            let seq = self.tx_sequences.entry(to_sockaddr).or_default();
             seq.inc();
 
             let packet = Packet {
@@ -349,10 +346,7 @@ impl PacketHandler {
     pub async fn multisend(&mut self, payloads: Vec<(Payload, SocketAddr)>) {
         if let Some(socket) = &self.socket {
             join_all(payloads.into_iter().map(|(payload, to_sockaddr)| {
-                let seq = self
-                    .tx_sequences
-                    .entry(to_sockaddr)
-                    .or_insert_with(Seq32::new);
+                let seq = self.tx_sequences.entry(to_sockaddr).or_default();
                 seq.inc();
 
                 let packet = Packet {
