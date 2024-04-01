@@ -28,7 +28,7 @@ dryoc = { version = "0.5", features = ["nightly", "serde", "simd_backend"] }
 uuid = { version = "1.1", features = ["v4", "fast-rng", "serde"] }
 rand = "0.8"
 rand_chacha = { version = "0.3", features = ["simd"] }
-lru = "0.11"
+lru = "0.12"
 tracing = "0.1"
 genserver = "0.2"
 chrono = { version = "0.4", default-features = false, features = [
@@ -40,5 +40,5 @@ lazy_static = "1.4.0"
 
 [dev-dependencies]
 test-log = { version = "0.2", features = ["log", "trace"] }
-env_logger = "0.10"
+env_logger = "0.11"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
