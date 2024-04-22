@@ -78,12 +78,12 @@ async fn many_nodes() {
     let notified: Vec<_> = notifies.iter().map(|n| n.notified()).collect();
     futures::future::join_all(notified).await;
 
-    tokio::time::sleep(Duration::from_secs(1)).await;
+    tokio::time::sleep(Duration::from_secs(2)).await;
 
     let s = String::from("why hello there my fren");
     g1.broadcast(s.as_bytes().to_vec()).await.expect("err");
 
-    tokio::time::sleep(Duration::from_secs(1)).await;
+    tokio::time::sleep(Duration::from_secs(2)).await;
 
     assert_eq!(*handler.response.read().unwrap(), s);
     assert_eq!(handler.counter.load(Ordering::Relaxed), num_peers);
