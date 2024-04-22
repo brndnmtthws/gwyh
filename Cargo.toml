@@ -15,7 +15,7 @@ license = "LGPL-3.0-only"
 name = "gwyh"
 readme = "README.md"
 repository = "https://github.com/brndnmtthws/gwyh"
-version = "0.1.0"
+version = "0.1.1"
 
 # requires 1.65 for GATs, 1.77 for group_by
 rust-version = "1.77"
