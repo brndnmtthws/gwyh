@@ -7,7 +7,7 @@ edition = "2021"
 keywords = [
   "async",
   "asynchronous",
-  "eventually-consistent",
+  "distributed",
   "gossip",
   "network",
 ]
