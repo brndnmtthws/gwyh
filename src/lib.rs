@@ -1,9 +1,4 @@
-#![feature(
-    map_try_insert,
-    type_alias_impl_trait,
-    slice_group_by,
-    impl_trait_in_assoc_type
-)]
+#![feature(map_try_insert, type_alias_impl_trait, impl_trait_in_assoc_type)]
 
 mod and_then;
 mod delayed;

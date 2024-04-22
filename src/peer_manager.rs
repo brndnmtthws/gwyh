@@ -331,7 +331,7 @@ impl PeerManager {
 
                 // choose 1 peer from each remote peer zone
                 let mut remote_peers: Vec<_> = remote_peers
-                    .group_by(|a, b| a.zone() == b.zone())
+                    .chunk_by(|a, b| a.zone() == b.zone())
                     .flat_map(|zone| {
                         zone.iter()
                             .map(|p| p.id())

@@ -87,7 +87,13 @@ impl Hmac {
     fn calculate_hmac(hashed_key: &Hash, message: &Vec<u8>, timestamp: &DateTime<Utc>) -> Hash {
         let mut hasher = GenericHash::new(Some(hashed_key)).unwrap();
         hasher.update(message.as_slice());
-        hasher.update(timestamp.timestamp_nanos().to_string().as_bytes());
+        hasher.update(
+            timestamp
+                .timestamp_nanos_opt()
+                .expect("timestamp_nanos_opt failed")
+                .to_string()
+                .as_bytes(),
+        );
         hasher.finalize().expect("HMAC failed")
     }
 }
