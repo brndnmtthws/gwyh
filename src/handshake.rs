@@ -288,7 +288,7 @@ impl GenServer for Handshaker {
             ohais: HashMap::new(),
             okboss: HashMap::new(),
             inflight: HashSet::new(),
-            rng: SeedableRng::from_entropy(),
+            rng: SeedableRng::from_os_rng(),
             hashed_keys: None,
             bootstrap: None,
         }
@@ -334,7 +334,7 @@ impl Handshaker {
         if let Some(hashed_keys) = &self.hashed_keys {
             hashed_keys
                 .iter()
-                .map(|hashed_key| Hmac::new(hashed_key, timestamp, self.rng.gen_range(69..420)))
+                .map(|hashed_key| Hmac::new(hashed_key, timestamp, self.rng.random_range(69..420)))
                 .collect()
         } else {
             vec![]
@@ -486,7 +486,7 @@ impl Handshaker {
 
         let registry = self.registry.clone();
         let millis = if inflight {
-            self.rng.gen_range(
+            self.rng.random_range(
                 HANDSHAKE_BOOTSTRAP_DELAY_MILLIS_MIN..HANDSHAKE_BOOTSTRAP_DELAY_MILLIS_MAX,
             )
         } else {
@@ -528,13 +528,10 @@ impl Handshaker {
     #[tracing::instrument(skip(self))]
     pub async fn request_peerlist(&mut self, id: Uuid, sockaddr: SocketAddr) {
         self.registry
-            .call_packet_handler(PacketHandlerMessage::SendMessage(
-                id,
-                Message {
-                    id: Uuid::new_v4(),
-                    body: Body::PeerRequest(Box::new(PeerRequest::PeerList)),
-                },
-            ))
+            .call_packet_handler(PacketHandlerMessage::SendMessage(id, Message {
+                id: Uuid::new_v4(),
+                body: Body::PeerRequest(Box::new(PeerRequest::PeerList)),
+            }))
             .await
             .ok();
     }
@@ -569,9 +566,9 @@ impl Handshaker {
 
         let peers: Vec<_> = self.registry.nodeinfo().peers().to_vec();
         let registry = self.registry.clone();
-        let millis = self
-            .rng
-            .gen_range(HANDSHAKE_BOOTSTRAP_DELAY_MILLIS_MIN..HANDSHAKE_BOOTSTRAP_DELAY_MILLIS_MAX);
+        let millis = self.rng.random_range(
+            HANDSHAKE_BOOTSTRAP_DELAY_MILLIS_MIN..HANDSHAKE_BOOTSTRAP_DELAY_MILLIS_MAX,
+        );
         self.bootstrap = Some(Delayed::new(Duration::from_millis(millis), async move {
             use std::net::ToSocketAddrs;
             for peer in peers.iter() {

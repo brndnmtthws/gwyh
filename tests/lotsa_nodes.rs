@@ -63,7 +63,7 @@ async fn many_nodes() {
     for i in 0..num_peers {
         sleep(Duration::from_millis(1)).await;
         let mut gwyh = GwyhBuilder::new()
-            .with_bind_addr(&format!("0.0.0.0:{}", 42070 + i))
+            .with_bind_addr(format!("0.0.0.0:{}", 42070 + i))
             .with_peers(vec!["127.0.0.1:42069".into()])
             .with_handler(handler.clone())
             .build()
