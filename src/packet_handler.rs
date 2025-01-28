@@ -18,6 +18,7 @@ use tokio::time::{Duration, Instant};
 use tracing::error;
 use uuid::Uuid;
 
+use crate::GwyhHandler;
 use crate::handshake::HandshakerMessage;
 use crate::interval::Interval;
 use crate::message::{Body, Message};
@@ -25,7 +26,6 @@ use crate::packet::{Packet, Payload};
 use crate::peer_manager::{PeerManagerRequest, PeerRequest, PeerStatus};
 use crate::registry::Registry;
 use crate::sequence::Seq32;
-use crate::GwyhHandler;
 
 impl Debug for dyn GwyhHandler + Send + Sync {
     fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -139,7 +139,7 @@ impl GenServer for PacketHandler {
             seen: LruCache::new(NonZeroUsize::new(10_000).expect("bad usize")),
             broadcast_handler_async: None,
             broadcast_handler: None,
-            rng: SeedableRng::from_entropy(),
+            rng: SeedableRng::from_os_rng(),
             _rate_control: rate_control,
         }
     }
@@ -281,7 +281,7 @@ impl PacketHandler {
                                     .entry(from_sockaddr)
                                     .and_modify(|d| {
                                         *d = (*d as f64
-                                            * self.rng.gen_range(RC_DELAY_INCREASE.clone()))
+                                            * self.rng.random_range(RC_DELAY_INCREASE.clone()))
                                             as u64
                                     })
                                     .or_insert(RC_DEFAULT_PACKET_INTERVAL_NANOS);

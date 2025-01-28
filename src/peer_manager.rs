@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use genserver::GenServer;
 use rand::rngs::StdRng;
+use rand::seq::IndexedRandom;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use serde::{Deserialize, Serialize};
@@ -12,6 +13,7 @@ use tokio::time::Duration;
 use tracing::error;
 use uuid::Uuid;
 
+use crate::DistributionStrategy;
 use crate::and_then::AndThen;
 use crate::delayed::Delayed;
 use crate::handshake::HandshakerMessage;
@@ -20,7 +22,6 @@ use crate::message::{Body, Message};
 use crate::packet_handler::PacketHandlerMessage;
 use crate::peer::Peer;
 use crate::registry::Registry;
-use crate::DistributionStrategy;
 
 const REASSIGN_DELAY_HIGH_MILLIS: u64 = 5_000;
 const REASSIGN_DELAY_LOW_MILLIS: u64 = 25;
@@ -106,7 +107,7 @@ impl GenServer for PeerManager {
             subscribers: HashSet::new(),
             subscribed_to: HashSet::new(),
             reassign_timer: None,
-            rng: SeedableRng::from_entropy(),
+            rng: SeedableRng::from_os_rng(),
             notify_ready: None,
             heartbeat: None,
             heartbeat_watchdogs: HashMap::new(),
@@ -199,13 +200,10 @@ impl PeerManager {
         }
         for id in self.subscribers.iter() {
             self.registry
-                .cast_packet_handler(PacketHandlerMessage::SendMessage(
-                    *id,
-                    Message {
-                        id: Uuid::new_v4(),
-                        body: Body::PeerRequest(Box::new(PeerRequest::Heartbeat)),
-                    },
-                ))
+                .cast_packet_handler(PacketHandlerMessage::SendMessage(*id, Message {
+                    id: Uuid::new_v4(),
+                    body: Body::PeerRequest(Box::new(PeerRequest::Heartbeat)),
+                }))
                 .await
                 .ok();
         }
@@ -214,15 +212,12 @@ impl PeerManager {
     #[tracing::instrument(skip(self))]
     async fn send_peerlist(&mut self, to: Uuid) {
         self.registry
-            .cast_packet_handler(PacketHandlerMessage::SendMessage(
-                to,
-                Message {
-                    id: Uuid::new_v4(),
-                    body: Body::PeerRequest(Box::new(PeerRequest::Peers(
-                        self.known.values().cloned().collect(),
-                    ))),
-                },
-            ))
+            .cast_packet_handler(PacketHandlerMessage::SendMessage(to, Message {
+                id: Uuid::new_v4(),
+                body: Body::PeerRequest(Box::new(PeerRequest::Peers(
+                    self.known.values().cloned().collect(),
+                ))),
+            }))
             .await
             .ok();
     }
@@ -295,7 +290,7 @@ impl PeerManager {
         if self.subscribed_to.len() < self.registry.nodeinfo().peer_subscriptions() {
             let millis = self
                 .rng
-                .gen_range(REASSIGN_DELAY_LOW_MILLIS..REASSIGN_DELAY_HIGH_MILLIS);
+                .random_range(REASSIGN_DELAY_LOW_MILLIS..REASSIGN_DELAY_HIGH_MILLIS);
             let registry = self.registry.clone();
             self.reassign_timer = Some(Delayed::new(Duration::from_millis(millis), async move {
                 registry
@@ -307,7 +302,7 @@ impl PeerManager {
     }
 
     fn choose_peers(&self) -> HashSet<Uuid> {
-        use rand::seq::{IteratorRandom, SliceRandom};
+        use rand::seq::IteratorRandom;
         let (_id_msb, id_lsb) = self.registry.nodeinfo().id().as_u64_pair();
         let mut rng = ChaCha8Rng::seed_from_u64(id_lsb);
 
@@ -404,13 +399,10 @@ impl PeerManager {
 
     async fn send_start_subscription(registry: &Registry, id: Uuid) {
         registry
-            .cast_packet_handler(PacketHandlerMessage::SendMessage(
-                id,
-                Message {
-                    id: Uuid::new_v4(),
-                    body: Body::PeerRequest(Box::new(PeerRequest::StartSubscription)),
-                },
-            ))
+            .cast_packet_handler(PacketHandlerMessage::SendMessage(id, Message {
+                id: Uuid::new_v4(),
+                body: Body::PeerRequest(Box::new(PeerRequest::StartSubscription)),
+            }))
             .await
             .ok();
     }
@@ -446,13 +438,10 @@ impl PeerManager {
         }
         for id in removed_peers.iter() {
             self.registry
-                .cast_packet_handler(PacketHandlerMessage::SendMessage(
-                    *id,
-                    Message {
-                        id: Uuid::new_v4(),
-                        body: Body::PeerRequest(Box::new(PeerRequest::EndSubscription)),
-                    },
-                ))
+                .cast_packet_handler(PacketHandlerMessage::SendMessage(*id, Message {
+                    id: Uuid::new_v4(),
+                    body: Body::PeerRequest(Box::new(PeerRequest::EndSubscription)),
+                }))
                 .await
                 .ok();
             // cancel heartbeat watchdog for this node
@@ -529,13 +518,10 @@ impl PeerManager {
         }
         // acknowledge we've started this subscription
         self.registry
-            .cast_packet_handler(PacketHandlerMessage::SendMessage(
-                id,
-                Message {
-                    id: Uuid::new_v4(),
-                    body: Body::PeerRequest(Box::new(PeerRequest::SubscriptionStarted)),
-                },
-            ))
+            .cast_packet_handler(PacketHandlerMessage::SendMessage(id, Message {
+                id: Uuid::new_v4(),
+                body: Body::PeerRequest(Box::new(PeerRequest::SubscriptionStarted)),
+            }))
             .await
             .ok();
     }
@@ -564,13 +550,10 @@ impl PeerManager {
     async fn shutdown(&mut self) {
         for id in self.subscribed_to.iter() {
             self.registry
-                .call_packet_handler(PacketHandlerMessage::SendMessage(
-                    *id,
-                    Message {
-                        id: Uuid::new_v4(),
-                        body: Body::PeerRequest(Box::new(PeerRequest::EndSubscription)),
-                    },
-                ))
+                .call_packet_handler(PacketHandlerMessage::SendMessage(*id, Message {
+                    id: Uuid::new_v4(),
+                    body: Body::PeerRequest(Box::new(PeerRequest::EndSubscription)),
+                }))
                 .await
                 .ok();
         }
@@ -584,8 +567,6 @@ mod tests {
 
     #[test]
     fn test_choose() {
-        use rand::seq::SliceRandom;
-
         let mut rng = ChaCha8Rng::seed_from_u64(69);
         let sample = "Hello, audience!".as_bytes();
 
